@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  lle:
+    image: chimplie/local-lambda-executor:local
+    build: local-lambda-executor
+    command: ["start"]
+    ports:
+      - "${EXECUTOR_PORT}:3000"
+    environment:
+      - SQS_ENDPOINT
+      # These are the fake credentials to bypass AWS-SDK limitations:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+    volumes:
+      - .config/local-lambda-executor/config.yml:/opt/lle/config/config.yml
+    restart: always
+    depends_on:
+      - sqs
+
+  lambda:
+    image: sample-lambdas/baasic:local
+    build: sample-lambdas/basic
+    environment:
+      - SQS_ENDPOINT
+      - SQS_RESULTS_QUEUE
+      - BATCH_SUCCESS_RATE
+      - MESSAGE_SUCCESS_RATE
+      # These are the fake credentials to bypass AWS-SDK limitations:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+    ports:
+      - "${LAMBDA_BASIC_PORT}:8080"
+
+  # This will emulate SQS. See: https://github.com/softwaremill/elasticmq
+  sqs:
+    image: softwaremill/elasticmq-native:latest
+    ports:
+      - "${SQS_PORT}:9324"
+      - "${SQS_DEBUG_PORT}:9325"
+    volumes:
+      - .config/elasticmq/:/opt/persist
+      - .config/elasticmq/elasticmq.conf:/opt/elasticmq.conf
+    restart: always

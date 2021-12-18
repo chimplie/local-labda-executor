@@ -1,0 +1,7 @@
+# This is a default config packaged with application. It doesn't configure any resources.
+
+queues:
+
+lambdas:
+
+eventSourceMappings:

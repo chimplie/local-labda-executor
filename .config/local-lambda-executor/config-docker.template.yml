@@ -1,0 +1,46 @@
+queues:
+  tasks:
+    name: tasks
+    # Check send parameters from AWS SDK examples: https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/javascriptv3/example_code/sqs/src/sqs_sendmessage.js
+    producers:
+      - timeout: 1
+        body: "Hello"
+        params:
+          DelaySeconds: 1
+          MessageAttributes:
+            Producer:
+              DataType: "String"
+              StringValue: "Local Lambda Executor"
+  results:
+    name: results
+    # Check receive parameters from AWS SDK examples: https://github.com/awsdocs/aws-doc-sdk-examples/blob/main/javascriptv3/example_code/sqs/src/sqs_longpolling_receivemessage.js
+    consumers:
+      - AttributeNames:
+          - "SentTimestamp"
+        MaxNumberOfMessages: 5
+        MessageAttributeNames:
+          - "All"
+        WaitTimeSeconds: 10
+  dead_letters:
+    name: dead-letters
+    consumers:
+      - AttributeNames:
+          - "SentTimestamp"
+        MaxNumberOfMessages: 5
+        MessageAttributeNames:
+          - "All"
+        WaitTimeSeconds: 10
+
+lambdas:
+  basic:
+    params:
+      endpoint: "http://lambda:8080"
+
+eventSourceMappings:
+  - queue: tasks
+    lambda: basic
+    params:
+      BatchSize: 5
+      MaximumBatchingWindowInSeconds: 5
+      FunctionResponseTypes:
+        - ReportBatchItemFailures

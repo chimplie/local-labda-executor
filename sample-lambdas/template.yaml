@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample Lambda Functions
+
+  SAM Template for AWS Lambda functions to test Local Lambda Executor.
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  BasicFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Events:
+        MySQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TasksQueue.Arn
+            BatchSize: 10
+    Metadata:
+      DockerTag: nodejs14.x-v1
+      DockerContext: ./basic
+      Dockerfile: Dockerfile
+  TasksQueue:
+    Type: AWS::SQS::Queue
+  ResultsQueue:
+    Type: AWS::SQS::Queue
+
+Outputs:
+  BasicFunction:
+    Description: "Basic Lambda Function ARN"
+    Value: !GetAtt BasicFunction.Arn
+  BasicFunctionIamRole:
+    Description: "Implicit IAM Role created for Basic function"
+    Value: !GetAtt BasicFunction.Arn
